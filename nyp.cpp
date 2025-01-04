@@ -87,7 +87,133 @@ public:
     Yemek(int x, int y) : Varlik(x, y, 'F') {}
 };
 
+class Su : public Varlik {
+public:
+    Su(int x, int y) : Varlik(x, y, 'W') {}
+};
 
+// Harita sinifi
+class Harita {
+private:
+    int genislik;
+    int yukseklik;
+    std::vector<std::string> harita;
+    Oyuncu* oyuncu;
+    std::vector<Yemek> yemekler;
+    std::vector<Su> sular;
+
+public:
+    Harita(int genislik, int yukseklik, Oyuncu* oyuncu)
+        : genislik(genislik), yukseklik(yukseklik), oyuncu(oyuncu) {
+        harita = std::vector<std::string>(yukseklik, std::string(genislik, ' '));
+        for (int i = 0; i < genislik; i++) {
+            harita[0][i] = '#';
+            harita[yukseklik - 1][i] = '#';
+        }
+        for (int i = 0; i < yukseklik; i++) {
+            harita[i][0] = '#';
+            harita[i][genislik - 1] = '#';
+        }
+
+        oyuncu->setPozisyon(1, 1);
+        harita[oyuncu->getY()][oyuncu->getX()] = oyuncu->getSembol();
+
+        srand(time(0));
+        for (int i = 0; i < 3; i++) {
+            int x = rand() % (genislik - 2) + 1;
+            int y = rand() % (yukseklik - 2) + 1;
+            yemekler.emplace_back(x, y);
+            harita[y][x] = 'F';
+
+            x = rand() % (genislik - 2) + 1;
+            y = rand() % (yukseklik - 2) + 1;
+            sular.emplace_back(x, y);
+            harita[y][x] = 'W';
+        }
+    }
+
+    void ciz() {
+        for (const auto& satir : harita) {
+            std::cout << satir << std::endl;
+        }
+    }
+
+    void guncelle() {
+        for (auto& satir : harita) {
+            std::fill(satir.begin(), satir.end(), ' ');
+        }
+        for (int i = 0; i < genislik; i++) {
+            harita[0][i] = '#';
+            harita[yukseklik - 1][i] = '#';
+        }
+        for (int i = 0; i < yukseklik; i++) {
+            harita[i][0] = '#';
+            harita[i][genislik - 1] = '#';
+        }
+        harita[oyuncu->getY()][oyuncu->getX()] = oyuncu->getSembol();
+        for (auto it = yemekler.begin(); it != yemekler.end(); ) {
+            if (it->getX() == oyuncu->getX() && it->getY() == oyuncu->getY()) {
+                oyuncu->yemekBul();
+                it = yemekler.erase(it);
+            } else {
+                harita[it->getY()][it->getX()] = it->getSembol();
+                ++it;
+            }
+        }
+        for (auto it = sular.begin(); it != sular.end(); ) {
+            if (it->getX() == oyuncu->getX() && it->getY() == oyuncu->getY()) {
+                oyuncu->suBul();
+                it = sular.erase(it);
+            } else {
+                harita[it->getY()][it->getX()] = it->getSembol();
+                ++it;
+            }
+        }
+    }
+
+    char kontrolHedef(int x, int y) {
+        return harita[y][x];
+    }
+
+    void temizleHedef(int x, int y) {
+        harita[y][x] = ' ';
+    }
+
+    const std::vector<std::string>& getHarita() const {
+        return harita;
+    }
+};
+
+// Oyun Motoru sinifi
+class OyunMotoru {
+private:
+    Oyuncu oyuncu;
+    Harita harita;
+    bool oyunDevam;
+
+public:
+    OyunMotoru() : oyuncu(1, 1, 8, 8), harita(10, 10, &oyuncu) {
+        oyunDevam = true;
+    }
+
+    void baslat() {
+        std::cout << "Hos Geldiniz! Ac ve Susuzluk Oyununa!" << std::endl;
+        oyunDongusu();
+    }
+
+    void oyunDongusu() {
+        while (oyunDevam) {
+            harita.guncelle();
+            harita.ciz();
+            std::cout << "Aclik: " << oyuncu.getAclik() << "  Susuzluk: " << oyuncu.getSusuzluk() << std::endl;
+            char tus;
+            std::cout << "Hareket etmek icin bir tus girin (W/A/S/D): ";
+            std::cin >> tus;
+            oyuncu.hareket(tus, harita.getHarita());
+            oyunDevam = oyuncu.kontrol();
+        }
+    }
+};
 
 
 int main() {
