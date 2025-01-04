@@ -87,6 +87,7 @@ public:
     Yemek(int x, int y) : Varlik(x, y, 'F') {}
 };
 
+// Su sinifi: Varlik'tan turetiliyor
 class Su : public Varlik {
 public:
     Su(int x, int y) : Varlik(x, y, 'W') {}
@@ -211,13 +212,12 @@ public:
             std::cin >> tus;
             oyuncu.hareket(tus, harita.getHarita());
             oyunDevam = oyuncu.kontrol();
-        }
-    }
+        }
+    }
 };
-
 
 int main() {
     OyunMotoru oyun;
     oyun.baslat();
     return 0;
-}
+} 
